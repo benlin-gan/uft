@@ -1,0 +1,820 @@
+\documentclass{article}
+\title{Unique Prime Factorization}
+\date{2022-07-01}
+\author{Benlin Gan}
+\usepackage{amsmath}
+\usepackage{amsfonts, amssymb}
+\DeclareMathOperator{\lcm}{lcm}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\QQ}{\mathbb{Q}}
+\newcommand{\RR}{\mathbb{R}}
+\usepackage{csvsimple, listings, amsthm}
+\usepackage{hyperref}
+\newtheorem{lem}{Lemma}
+\newtheorem{thm}{Theorem}
+\newcounter{case}
+\renewcommand{\thecase}{\Alph{case}}
+\newcounter{proofcase}[case]
+\renewcommand{\theproofcase}{(\arabic{proofcase})}
+\newif\ifusedcase
+\newcommand{\proofcase}{%
+  \ifusedcase\else\usedcasetrue\stepcounter{case}\fi
+  \par
+  \refstepcounter{proofcase}
+  \everypar=\expandafter{\the\everypar{\setbox0=\lastbox}\everypar{}Case \theproofcase{}: }%
+}
+\newtheorem*{defun}{Definition}
+\usepackage{epigraph} 
+\begin{document}
+  \maketitle
+  \tableofcontents
+  \newpage
+  \section{Axioms}
+  \epigraph{If you want to make an apple pie from scratch, you must first create the universe.}{\textit{Carl Sagan}}
+  In addition to axioms related to naive set theory and logic, we will use the following axioms.
+  \subsection{Commutative Ring Axioms}
+  A Commutative Ring $R$ is a triple $(S, +, \cdot)$, where $S$ is a set, and $+$ and $\cdot$ are operations $S \times S \to S$, obeying the following axioms:
+  \begin{itemize}
+  \item Addition is associative : $\forall a, b, c \in S$, $a + (b + c) = (a + b) + c$
+  \item Addition is commutative : $\forall a, b \in S$, $a + b = b + a$
+  \item Addition has an identity element, 0 : $\forall a \in S, a + 0 = a$
+  \item All elements in S have an additive inverse : $\forall a \in S, \exists i \in S, a + i = 0$
+    \begin{itemize}
+    \item Let the $-$ operator be a function $S \to S$ from $a \in S$ to its inverse. In other words $a + (-a) = 0$
+    \end{itemize}
+  \item Multiplication is associative : $\forall a, b, c \in S$, $a(bc) = (ab)c$
+  \item Multiplication is commutative : $\forall a, b \in S$, $ab = ba$
+  \item Multiplication has an identity element, 1 : $\forall a \in S$, $a \cdot 1 = a$
+  \item Mulitplication distributes over addition : $\forall a, b, c \in S$, $a(b + c) = ab + ac$
+  \end{itemize}
+  In number theory all rings are assumed to be commutative. From here on out, ring refers to commutative ring. Additionally in a slight abuse of notation, we will consider sometimes say $R$ when we mean $S$. For instance when we say $a \in R$, what we mean is that $a \in S$.\\\\
+  Here are some facts that follow directly from these axioms. 
+  \begin{thm} [Negative Zero Equals Zero] $0 = -0$
+    \begin{proof}
+      \begin{equation*}
+        0 = 0 + (-0) = (-0) + 0 = -0
+      \end{equation*}
+      By the inverse axiom, commuatation, and the identity axiom respectively.
+    \end{proof}
+  \end{thm}
+  \begin{thm}[Right Cancellation]\label{rc} $\forall a, b, c \in R$, If $a + c = b + c$ then $a = b$
+    \begin{proof}
+      \begin{align*}
+        a &= a + 0 \\
+          &= a + (c + (-c))\\
+          &= (a + c) + (-c)\\
+          &= (b + c) + (-c)\\
+          &= b + (c + (-c))\\
+          &= b + 0\\
+          &= b
+      \end{align*}
+    \end{proof}
+  \end{thm}
+  \begin{thm}[Left Cancellation]\label{lc} $\forall a, b, c \in R$, If $c + a = c + b$ then $a = b$
+    \begin{proof}
+      By commutativity $a + c = b + c$, so by Theorem \eqref{rc}, $a = b$.
+    \end{proof}
+  \end{thm}
+  \begin{thm}[Mulitplication by Zero]\label{m0} $\forall a \in R$, $a \cdot 0 = 0$
+    \begin{proof}
+      \begin{align*}
+        a = a(1) = a(1 + 0) = a\cdot1 + a\cdot0 = a + a\cdot0
+      \end{align*}
+      and
+      \begin{align*}
+        a = a + 0
+      \end{align*}
+      Then by transitivity,
+      \begin{align*}
+        a + a\cdot0 = a + 0
+      \end{align*}
+      Then simply apply Left Cancellation\eqref{lc}.
+    \end{proof}
+  \end{thm}
+  \begin{thm}[Collapsing Ring Theorem]\label{cort} For any ring $R$, if $1 = 0$, then $\forall a \in R,\ a = 0$
+    \begin{proof}
+      \begin{align*}
+        a &= a\cdot 1 \\
+          &= a\cdot 0 \\
+          &= 0 \\
+      \end{align*}
+    \end{proof}
+    A ring where $1 = 0$ thus only has one unique element. All such rings are isomorphic to the trivial ring.
+  \end{thm}
+  \begin{thm}[Negative of Negative] $\forall a \in R$, $-(-a) = a$
+    \begin{proof}
+      The following are true:
+      \begin{align*}
+        a + (-a) &= 0\\
+        (-a) + (-(-a)) &= 0\\
+      \end{align*}
+      Then substituting, we get:
+      \begin{align*}
+        a + (-a) &= (-a) + (-(-a))\\
+        a + (-a) &= (-(-a)) + (-a)\\
+      \end{align*}
+      Then simply apply Right Cancellation \eqref{rc} to get $a = -(-a)$
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Distributing Negatives] $\forall a, b \in R$, $-(a + b) = (-a) + (-b)$
+    \begin{proof}
+      We know that:
+      \begin{align*}
+        (a + b) + (-(a + b)) = 0
+      \end{align*}
+      and that
+      \begin{align*}
+        0 &= 0 + 0 \\
+          &= (a + (-a)) + 0 \\
+          &= (a + (-a)) + (b + (-b)) \\
+          &= a + ((-a) + (b + (-b)))\\
+          &= a + (((-a) + b) + (-b))\\
+          &= a + ((b + (-a)) + (-b))\\
+          &= a + (b + ((-a) + (-b)))\\
+          &= (a + b) + ((-a) + (-b))\\
+      \end{align*}
+      So by substitution:
+      \begin{equation*}
+        (a + b) + (-(a + b)) = (a + b) + ((-a) + (-b))
+      \end{equation*}
+      Then cancel the $(a+b)$ to get $-(a+b) = (-a) + (-b)$.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Right Negative Distribution over Multiplication]\label{rndm} $\forall a, b \in R$, $-(ab) = a(-b)$
+    \begin{proof}
+      We know the following because of the definition of $-$:
+      \begin{align*}
+        ab + (-(ab)) &= 0\\
+        b + (-b) &= 0\\
+      \end{align*}
+      Now do some manipulations with the latter equation.
+      \begin{align*}
+        0 &= a(0) \\
+          &= a(b + (-b))\\
+          &= ab + a(-b)\\
+      \end{align*}
+      Then substituting we have
+      \begin{equation*}
+        ab + (-ab) = ab + a(-b)
+      \end{equation*}
+      Then simply cancel the $ab$, and we are done.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Left Negative Distribution over Multiplication] $\forall a, b \in R$, $-(ab) = (-a)b$
+    \begin{proof}
+      If we do some commutation:
+      \begin{align*}
+        -(ab) = b(-a)\\b).
+        -(ba) = b(-a)\\
+      \end{align*}
+      We can see that the latter statement is equivalent to \eqref{rndm}\ , but with variable names changed.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Negative times Negative]\label{negtneg} $\forall a, b \in R$, $(-a)(-b) = ab$
+    \begin{proof}
+      \begin{equation*}
+        (-a)(-b) = -((-a)b) = -(-(ab)) = ab 
+      \end{equation*}
+    \end{proof}
+  \end{thm}
+  \begin{defun} [Subtraction] $\forall a, b \in R$, define $a - b = a + (-b)$. This definition also tells us that subtraction is closed over $R$.
+  \end{defun}
+  \subsection{Division}
+  \begin{defun} The $\mid$ operator is a binary relation on two elements of a ring, $R \times R \to Prop$. For $a, b \in R$, we say that $a \mid b$, or a divides b, if
+    \begin{align*}
+      \exists k \in R, b = ak
+    \end{align*}
+    If there does not exist such an a, then $a \nmid b$, and a does not divide b.
+  \end{defun}
+  \begin{thm}[Reflexivity of Divides]\label{divrefl} $\forall a \in R$, $a \mid a$
+    \begin{proof}
+      We want to show that $\exists k \in R$ such that $a = ak$. Simply choose $k = 1$. Then $a = a\cdot1$, and $a = a$.
+    \end{proof}
+  \end{thm}
+  \begin{thm}[Addition over Divides]\label{adddiv} $\forall a, b, c \in R$, If $a \mid b$, and $a \mid c$, then $a \mid b + c$
+    \begin{proof}
+      By definition $b = ak$ and $c = al$, for some $k, l \in R$, then $b + c = ak + al = a(k + l)$. $k+l$ is an integer by clousre, so $a \mid b+c$.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Multiplication over Divides]\label{muldiv} $forall a, b \in R$ If $a \mid b$, then for all $c \in R$, $a \mid bc$
+    \begin{proof}
+      By definition $b = ak$, for some $k \in R$, so $bc = (ak)c = a(kc)$. $kc$ is an integer by closure, so $a \mid bc$. 
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Linear Combinations Preserve Division]\label{lindiv} $\forall a, b, c \in R$, if $a \mid b$, and $a \mid c, $ then for all integers $x, y$, we know that $a \mid bx + cy$. 
+    \begin{proof}
+      We know that $a \mid bx$ by \eqref{muldiv}, similarly we kow that $a \mid cy$. Then by \eqref{adddiv}, we know that $a \mid bx + cy$.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Transitivity of Divides]\label{divtrans} $\forall a, b, c \in R$, if $a \mid b$ and $b \mid c$, then $a \mid c$.
+    \begin{proof}
+      We know that $b = ak$ and $c = bl$ for some $k, l \in R$, then substituting, $c = (ak)l = a(kl)$. $kl \in R$ by closure, so $a \mid c$, by definition. 
+    \end{proof}
+  \end{thm}
+  \subsection{Units and Primes}
+  In all rings there are certain elements which are more primitive or atomic than others. Two examples of such are units and primes.
+  \begin{defun} [Units] Call any element $u$ of a ring $R$ for which there exists a multiplicative inverse $u^{-1} \in R$ such that $u \cdot u^{-1} = 1$, a unit.
+  \end{defun}
+  \begin{thm} [1 is a Unit] Given any ring $R$. The multiplicative identity (1) of the ring is always a unit.
+    \begin{proof}
+      $1$ is its own multiplicative inverse, because $1 \cdot 1 = 1$.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [$-1$ is a Unit] Given any ring $R$. The additive inverse of the  multiplicative identity ($-1$) of the ring is always a unit.
+    \begin{proof}
+      $-1$ is its own multiplicative inverse, because $(-1)(-1) = 1 \cdot 1 = 1$ by \eqref{negtneg}.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Units Divide All] \label{uda} If $u$ is a unit of $R$, then $\forall a \in R$, $u \mid a$  
+    \begin{proof}
+      Fix $a$. Then we know $u(u^{-1}a) = (uu^{-1})a = 1\cdot a = a\cdot 1 = a$. Additionally, we know that $u^{-1}a$ is in $R$ by closure. Thus $u \mid a$ by defintion.
+    \end{proof}
+  \end{thm}
+  \begin{defun} [Primes] Call any element $a$ of a ring $R$ a prime, if for all $b, c \in R$ such that $bc = a$, implies that either $b$ is a unit or $c$ is a unit.
+  \end{defun}
+  \subsection{Ordered Ring Axioms}
+  An ordered ring $O$ is a commutative ring with a special nonempty subset $O^+$ obeying these additional axioms:
+  \begin{itemize}
+  \item $O^+$ is closed over addition : $\forall a, b \in O^+, a + b \in O^+$
+  \item $O^+$ is closed over multiplication : $\forall a, b \in O^+, ab \in O^+$
+  \item Nontriviality : $0 \notin O^+$
+  \item Trichotomy :  $\forall a \in O$, one of the following is true, $a \in O^+$, $a = 0$, or $-a \in O^+$
+  \end{itemize}
+  \begin{defun}[Positivity] We say an element of $O$ is positive if it is a member of $O^+$.\end{defun}
+  \begin{defun}[Less Than] $\forall a, b \in O$, $a < b$ if $\exists p \in O^+$, such that $b = a + p$.\end{defun}
+  \begin{thm}[Transitivity of $<$]\label{ltt} $\forall a, b, c \in O$, if $a < b$ and $b < c$ then $a < c$
+    \begin{proof}
+      Unfolding the defintions:
+      \begin{align*}
+        \exists p \in O^+, a = b + p \\
+        \exists p'\in O^+, b = c + p'\\
+      \end{align*}
+      Then substituting $a = (c + p') + p$, so $a = c + (p' + p)$. Then $p' + p \in O^+$, by closure. So $a < c$ by definition.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Irreflexivity of $<$]\label{ltirrefl} $\forall a \in O$, it is not true that $a < a$.
+    \begin{proof}
+      Suppose there was some $a$, such that $a < a$. Then, unfolding the definition:
+      \begin{align*}
+        \exists p \in O^+, a &= a + p\\
+        a + 0 &= a + p\\
+        0 = p\\
+      \end{align*}
+      But 0 is not positive by nontriviality. Contradiction.
+    \end{proof}
+  \end{thm}
+  \begin{thm} In an ordered ring $O$, $1 \neq 0$
+    \begin{proof}  Assume for the sake of contradiction that $1 = 0$. But then by \eqref{cort}\ , $0$ would be the only element in $O$. But $0 \notin O^+$ by nontriviality, but $O^+$ was defined to be a nonempty subset of $O$. Contradiction. Thus $1 \neq 0$.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [$0$ is never a unit] Given an ordered ring $O$. The additive inverse (0) of the ring is never a unit.
+    \begin{proof}
+      Suppose $0$ did have a multiplicative inverse $0^{-1}$, then $1 = 0 \cdot 0^{-1} = 0^{-1} \cdot 0 = 0$, but $1 \neq 0$, contradiction. Thus $0$ is never a unit of an ordered ring.
+    \end{proof}
+  \end{thm}
+
+  \begin{lem} [$-1$ is Not Positive]\label{n1npos} $-1 \notin O^+$ 
+    \begin{proof}
+      Do trichotomy on $-1$
+      \proofcase Suppose $-1 \in O^+$, then $1 = (-1) \cdot (-1) \in O^+$ by closure. But $1 = -(-1) \notin O^+$ by trichotomy. Contradiction.
+      \proofcase Suppose $-1 = 0$, then $(-1) + 1 = 0 + 1$, so $1 + (-1) = 1$, so $0 = 1$, but $0 \neq 1$ in an ordered ring. Contradiction.\\\\
+      Then it must be that $-1 \notin O^+$
+    \end{proof}
+  \end{lem}
+  \begin{lem} [$1$ is Positive]\label{1pos} $1 \in O^+$
+    \begin{proof}
+      Do trichotomy on $1$
+      \proofcase Suppose $1 = 0$, but $1 \neq 0$ in an ordered ring. Contradiction.
+      \proofcase Suppose $-1 \in O^+$, but this violates \eqref{n1npos}. Contradiction.\\\\
+      Thus, it must be that $1 \in O^+$
+    \end{proof}
+  \end{lem}
+  \begin{defun}[Nonnegatives] Define the set $O^0$, the set of nonnegative elements of the ring, as the union of $O^+$ and $\{0\}$.
+  \end{defun}
+  \begin{thm}[Closure of Nonnegatives over +] $\forall a, b \in O^0$, $a + b \in O^0$
+    \begin{proof}
+      \proofcase $a \in O^+, b \in O^+$, then $a + b \in O^+$, so $a + b \in O^0$
+      \proofcase $a \in O^+, b \in \{0\}$, then $b = 0$, so $a + 0  = a\in O^+$, and $a + b \in O^0$
+      \proofcase $a \in \{0\}, b \in O^+$, then $a = 0$, so $0 + b = b + 0 = b \in O^+$, and $a + b \in O^0$
+      \proofcase $a \in \{0\}, b \in \{0\}$, then $a + b = 0 + 0 = 0$, so $a + b \in \{0\}$, so $a + b \in O^0$
+    \end{proof}
+  \end{thm}
+  \begin{thm}[Closure of Nonnegatives over $\cdot$] $\forall a, b \in O^0$, $ab \in O^0$
+    \begin{proof}
+      \proofcase $a \in O^+, b \in O^+$, then $ab \in O^+$, so $ab \in O^0$
+      \proofcase $a \in O^+, b \in \{0\}$, then $b = 0$, so $a \cdot 0  = 0\in \{0\}$, and $ab \in O^0$
+      \proofcase $a \in \{0\}, b \in O^+$, then $a = 0$, so $0 \cdot b = b \cdot 0 = 0 \in \{0\}$, and $ab \in O^0$
+      \proofcase $a \in \{0\}, b \in \{0\}$, then $ab = 0 \cdot 0 = 0$, so $ab \in \{0\}$, so $ab \in O^0$
+    \end{proof}
+  \end{thm}
+  \begin{defun}[Less Than or Equal To]
+    $\forall a, b \in O$, $a \le b$, if and only if $a < b$ or $a = b$
+  \end{defun}
+  \begin{defun}[Greater Than]
+    $\forall a, b \in O$, $a > b$, if and only if $b < a$
+  \end{defun}
+  \begin{defun}[Greater Than or Equal To]
+    $\forall a, b \in O$, $a \ge b$, if and only if $a > b$ or $a = b$
+  \end{defun}
+  \begin{thm}[Transitivity of $\le$]\label{let} $\forall a, b, c \in O$, if $a \le b$ and $b \le c$ then $a \le c$
+    \begin{proof}
+      Consider the four case split:
+      \proofcase $a < b$ and $b < c$. Then $a < c$ by transitivity \eqref{ltt}. So $a \le c$ by definition.
+      \proofcase $a < b$ and $b = c$. Then $a < c$ by substitution. So $a \le c$ by definition.
+      \proofcase $a = b$ and $b < c$. Then $a < c$ by substitution. So $a \le c$ by definition.
+      \proofcase $a = b$ and $b = c$. Then $a = c$ by substitution. So $a \le c$ by definition.
+    \end{proof}
+  \end{thm}
+  \begin{thm}[0 Less than All Positives]\label{0lpos} $\forall a \in O$, $a \in O^+ \iff 0 < a$
+    \begin{proof}
+       For the forward direction, $a = a + 0$, so $a = 0 + a$, but $a \in O^+$, so by definition, $0 < a$.  For the backward direction, $0 < a$, so $a = 0 + p$ for some $p \in O^+$. Then $a = p + 0 = a$, so $a \in O^+$.
+    \end{proof}
+  \end{thm}
+  \begin{lem}[0 Less Than or Equal to All Nonegatives]\label{0lenneg} $\forall a \in O$, $0 \le a \iff a \in O^0$
+    \begin{proof}
+      We will first prove the forward direction. Case split $0 \le a$:
+      \proofcase Suppose that $0 = a$, then $a \in \{0\}$, so $a \in O^o$
+      \proofcase Suppose that $0 < a$, then $a \in O^+$, so $a \in O^0$,
+    \end{proof}
+  \end{lem}
+  \begin{lem}[Combining with Addition Preserves Order] $\forall a, b, c, d \in O^+$. If $a < c$ and $b < d$, then $a + b < c + d$
+    \begin{proof}
+      Unfolding the definitions:
+      \begin{align*}
+        \exists p \in O^+, a = c + p \\
+        \exists p'\in O^+, b = d + p'\\
+      \end{align*}
+      Then we know that:
+      \begin{align*}
+        a + b &= a + (d + p')\\
+              &= (c + p) + (d + p')\\
+              &= c + (p + (d + p'))\\
+              &= c + ((p + p') + d)\\
+              &= c + (d + (p + p'))\\
+              &= (c + d) + (p + p')\\
+      \end{align*}
+      But $(p+p') \in O^+$, by closure, so $a + b < c + d$ by definition.
+    \end{proof}   
+  \end{lem}
+  \begin{lem}[Constant Addition Preserves Order]\label{ltacons} $\forall a, b, c \in O$. If $a < b$ then $a + c < b + c$
+    \begin{proof}
+      Unfolding the definition we get:
+      \begin{equation*}
+        \exists p \in O^+, a = b + p
+      \end{equation*}
+      Then we can see that
+      \begin{align*}
+        a + c &= (b + p) + c\\
+              &= b + (p + c)\\
+              &= b + (c + p)\\
+              &= (b + c) + p\\
+      \end{align*}
+      Then by definition, $b + c < a + c$
+    \end{proof} 
+  \end{lem}
+  \begin{lem}\label{subtozero} $\forall a, b \in O$,  $a - b < 0 \iff a < b$
+    \begin{proof}
+      $a - b < 0$, so $(a + (-b)) + b < b$, so $a + ((-b) + b) < b$, so $a + (b + (-b)) < b$, so $a + 0 < b$, so $a < b$.
+    \end{proof}
+  \end{lem}
+  \begin{lem}[Constant Multiplication Preserves Order]\label{ltmcons} $\forall a, b \in O$, $\forall c \in O^+$, if $a < b$, then $ac < bc$.
+    \begin{proof}
+      Unfolding the definition we get:
+      \begin{equation*}
+        \exists p \in O^+, b = a + p
+      \end{equation*}
+      Then we can see that
+      \begin{align*}
+        bc &= (a + p)c \\
+           &= c(a + p) \\
+           &= ca + cp \\
+           &= ac + cp \\
+      \end{align*}
+      Then, $cp \in O^+$, by closure, so $ac < bc$ by defintion.
+    \end{proof}
+  \end{lem}
+  \begin{thm} [Closure of Division on Positives]\label{posdivclose} $\forall a, b \in O^+$, if $b = ak$ for some $k \in O$, then $k \in O^+$
+    \begin{proof}
+      Do trichotomy on $k$:
+      \proofcase Suppose $k = 0$, then $b = ak = a(0) = 0$, then $0 \in O^+$, but this violates nontriviality.
+      \proofcase Suppose $-k \in O^+$, then $a(-k) = -(ak) = -b \in O^+$ by closure. But then $b \notin O^+$ by trichotomy on $-b$, contradiction.
+      \proofcase Therefore $k \in O^+$
+    \end{proof}
+  \end{thm}
+  \begin{thm}[Total Ordering of O]\label{too} $\forall a, b \in O$, exactly one of the following is true: $a < b$ or $a = b$ or $b < a$
+    \begin{proof}
+      Consider $a - b$. Do trichotomy on it.
+      \proofcase Assume $a - b \in O^+$. Then $0 < a - b$ \eqref{0lpos}, so:
+      \begin{align*}
+        0 + b &< a - b + b\ \eqref{ltacons}\\
+        b + 0 &< a + (-b) + b\\
+        b &< a + ((-b) + b)\\
+        b &< a + (b + (-b))\\
+        b &< a + 0\\
+        b &< a\\
+      \end{align*}
+      \proofcase Assume $a - b = 0$. Then:
+      \begin{align*}
+        a &= a + 0\\
+          &= a + (b + (-b))\\
+          &= a + ((-b) + b)\\
+          &= (a + (-b)) + b\\
+          &= (a - b) + b\\
+          &= 0 + b\\
+          &= b + 0 \\
+          &= b\\
+      \end{align*}
+      \proofcase Assume $-(a - b) \in O^+$. Then $0 < -(a - b)$, so
+      \begin{align*}
+        0 + a &< -(a - b) + a\\
+        0 + a &< -(a + (-b)) + a\\
+        0 + a &< ((-a) + (-(-b))) + a\\
+        0 + a &< ((-a) + b) + a\\
+        0 + a &< (b + (-a)) + a\\
+        0 + a &< b + ((-a) + a)\\
+        0 + a &< b + (a + (-a))\\
+        0 + a &< b + 0\\
+        a + 0 &< b + 0\\
+        a &< b + 0\\
+        a &< b\\
+      \end{align*}
+      So either $b < a$ or $a = b$ or $a < b$.
+    \end{proof}
+    \begin{defun} [Without Loss of Generality] \label{wolog}
+      Without Loss of Generality or WOLOG, is a technique when we have $a, b \in O$, and assume that $a < b$, leaving the cases where $a = b$ or $b < a$ as an exercise to the reader.  
+    \end{defun}
+  \end{thm}
+  \begin{thm} [Antisymmetry of Less Than or Equal To] \label{leantisymm} $\forall a, b \in O$, if $a \le b$ and $b \le a$ then $a = b$
+    \begin{proof}
+      Do a case split:
+      \proofcase Suppose $a < b$ and $b < a$, then by transitivity $a < a$. But this violates irreflexivity \eqref{ltirrefl}, contradiction.
+      \proofcase Suppose $a < b$ and $b = a$, then by substitution $a < a$. Contradiction.
+      \proofcase Suppose $a = b$ and $b < a$, then by substitution $a < a$. Contradiction.
+      \proofcase Then it must be that $a = b$, and $b = a$
+    \end{proof}
+  \end{thm}
+  \newpage
+  \section{The Integers}
+  \epigraph{The Good Lord made all the integers; the rest is man's doing.}{\textit{Leopold Kronecker}}
+  The integers, hereafter denoted $\ZZ$, are elements of an ordered ring with an additional axiom called the Well Ordering Principle or WOP.
+  \begin{defun} [Well Ordering Principle] Every nonempty subset of the nonnegative integers has a minimal element. Or more formally. $\forall S \subset \ZZ^0,\ \exists e \in S$ such that $\forall e' \in S,\ e \le e'$.  
+  \end{defun}
+  \subsection{Properties of the Integers}
+  These axioms are enough to characterize the integers.
+  \begin{thm} [NIBZO] There is no integer between zero and one. $\nexists i \in \ZZ$ such that $0 < i$ and $i < 1$. 
+    \begin{proof}
+       Construct the set of integers between zero and one:
+       \begin{align*}
+         S = \{ i \mid i \in \ZZ^0, 0 < i < 1\}
+       \end{align*}
+       $S$ is a subset of the $\ZZ^0$, because it is constructed from it. Assume for the sake of contradiction that $S$ is nonempty. Then by WOP there exists a minimal element $e \in S$. Then we can see that $0 < e$ and $e < 1$. Applying \eqref{0lpos}, we can conclude that $e \in \ZZ^+$. Then by \eqref{ltmcons}, $e\cdot e < 1\cdot e$, or $e \cdot e < e$. By closure of multiplication, we can also see that $e \cdot e \in \ZZ^+$, so $0 < e \cdot e$. Then $e \cdot e \in \ZZ^0$, by closure again. This means that $e \cdot e \in S$, but $e \cdot e < e$, so $e$ is not the minimal element. Contradiction. Therefore our assumption that $S$ was nonempty is wrong. Thus there is no integer between 0 and 1.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [No integer between $n$ and $n+1$]\label{nibnn1} $\nexists i \in \ZZ$, such that $n < i$ and $i < n + 1$
+    \begin{proof}
+      Assume for the sake of contradiction that there did exist such an $i$, then:
+      \begin{align*}
+        n &< i < n + 1\\
+        n + (-n) &< i + (-n) < (n + 1) + (-n)\\
+        0 &< i - n < (1 + n) + (-n)\\
+        0 &< i - n < 1 + (n + (-n))\\
+        0 &< i - n < 1 + 0\\
+        0 &< i - n < 1\\
+      \end{align*}
+      But by closure $i - n$ is an integer, so the latter statement violates NIBZO.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Corollary of NIBZO]\label{lttole} $\forall a, b \in \ZZ$, $b < a \iff b + 1\le a$
+    \begin{proof}
+      We will first prove the forward direction. Do a case split comparing $a$ and $b+1$ \eqref{too}:
+      \proofcase Suppose $a < b + 1$,  then $b < a < b+1$, but this violates \eqref{nibnn1}, contradiction.
+      \proofcase Suppose $a = b + 1$, then $b + 1 \le a$ by defintion.
+      \proofcase Suppose $b + 1 < a$, then $b + 1 \le a$ by definition.
+    \end{proof}
+    \begin{proof}Now for the reverse direction. We will case split on whether $b + 1 = a$ or $b + 1 < a$.
+      \proofcase Suppose $b + 1 = a$, but 1 is positive \eqref{1pos}, so  $b < a$ by definition.
+      \proofcase Suppose $b + 1 < a$, but $b < b + 1$, because 1 is positive. So by transitivity, $b < a$. 
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Two Units in the Integers] $1$ and $-1$ are the only units in $\ZZ$
+    \begin{proof}
+      Assume for the sake of contradiction that $u$ is a unit of $\ZZ$ and $u \neq 1$ and $u \neq -1$. Then $uu^{-1} = 1$. Now do trichotomy on $u$,
+      \proofcase Suppose $u \in \ZZ^+$, then $0 < u$, so $1 \le u$, but $1 \neq u$, 
+    \end{proof}
+  \end{thm}
+  \subsection{Using Nonegative Integers for Counting}
+  The nonnegative integers are special, because they can be used to count. This allows us to make well formed expressions representing doing something repeatedly.
+  \begin{defun} [Sequence]
+    A sequence $F$ is a function $F : \ZZ^0 \to S$, where S is some arbitrary set. We use subscripts to denote function application. Thus, for all $n \in \ZZ^0$, $F_n$ is definitionally equal to $F(n)$.
+  \end{defun}
+  \begin{defun} [Indexed Product] For some $n, m \in \ZZ^0$, where $m \le n$, and some sequence $S: \ZZ^0 \to M$, where $M$ is some subset of a ring. Then define the indexed product $\prod_{j=m}^nS_j$ recursively as:
+    \begin{align*}
+      \prod_{j=m}^nS_j = \begin{cases}
+                        S_0 &\text{ if } m = n \\
+                        \prod_{j=m}^{n-1}S_j \cdot S_n &\text{ if } m < n\\ 
+                      \end{cases}
+    \end{align*}
+  \end{defun}
+  \begin{thm} [Well-Definedness of the Indexed Product] Given an indexed products $Q = \prod_{j=m}^nS_j$ where $S$ maps nonnegative integers to elements of a subset of some ring $R$. $Q$ is guaranteed to evaulate to some $h \in R$.
+    \begin{proof}
+      Construct the set of counterexamples $C$:
+      \begin{align*}
+        C = \{n \mid n, m \in \ZZ^0, m \le n, \nexists h \in R, h = \prod_{j=m}^nS_j\}
+      \end{align*}
+      $C$ is a subset of the $\ZZ^0$, because it is constructed from $\ZZ^0$. Assume for the sake of contradiction that $C$ is nonempty. Then by WOP there exists a minimal element $e \in C$. We know that $m \le e$, but also that $e \neq m$, as otherwise $\prod_{j=m}^eS_j = S_e \in R$, contradiction. Then we can conclude that $m < e$. Then 
+      \proofcase Suppose $\prod_{j=m}^{e-1}S_j$ equals some $h \in R$. But then:
+      \begin{align*}
+        \prod_{j=m}^eS_j = \prod_{j=m}^{e-1}S_j\cdot S_e = h \cdot S_e 
+      \end{align*}
+      but by closure $h \cdot S_e$ is in the ring $R$. So $\prod_{j=m}^eS_j$ does evaluate to some element in $R$. Contradiction.
+      \proofcase Now suppose $\prod_{j=m}^{e-1}S_j$ does not equal some $h \in R$. Additionally, we know that $m < e$, so $m + (-1) < e + (-1)$, and $m + (-1) + 1 = m \le e -1$. This tells us that $e-1 \in C$, but $e - 1 < e$, so $e$ is not the minimal element, contradiction. Therefore our assumption that $C$ is empty was false. Therefore, there is no $n$, for which an indexed product with an upper bound of $n$ will fail to evaluate to some $h \in R$.
+    \end{proof}
+  \end{thm}
+  \begin{thm} [General Associativity] Given an indexed product $\prod_{j=m}^nS_j$, where $m < n$, Then $\forall k \in \ZZ^0$, $m \le k < n$, we have
+    \begin{align*}
+      \prod_{j=m}^nS_j = \prod_{j=m}^kS_j\prod_{j=k+1}^{n}S_j
+    \end{align*}
+    \begin{proof}
+      Fix $S$, $m$, and $k$. Now construct the set of counterexamples $C$:
+      \begin{align*}
+        C = \{n \mid n \in \ZZ^0, k < n, \prod_{j=m}^nS_j \neq \prod_{j=m}^kS_j\prod_{j=k+1}^{n}S_j\}
+      \end{align*}
+      This set is constucted from the $\ZZ^0$, so it is a subset of $\ZZ^0$. Assume for the sake of contradiction that this set is nonempty. Then there exists a minimal element $e \in C$. Then $k < e$, so $k + 1 \le e$
+      \proofcase Suppose that $k + 1 = e$, then $k = e - 1$, and we can see that:
+      \begin{align*}
+        \prod_{j=m}^kS_j\prod_{j=k+1}^{e}S_j &=  \prod_{j=m}^{e - 1}S_j\prod_{j=e}^eS_j \\
+                                             &= \prod_{j=m}^{e-1}S_j \cdot S_e\\
+                                             &= \prod_{j=m}^{e}S_j\\
+      \end{align*}
+      Then $e \notin C$, Contradiction.
+      \proofcase Suppose that $k + 1 < e$, then $k + 1 \le e - 1$, and we have:
+      \begin{align*}
+        \prod_{j=m}^eS_j &\neq \prod_{j=m}^kS_j\prod_{j=k+1}^{e}S_j \\
+        \prod_{j=m}^{e-1}S_j\cdot S_e &\neq  \prod_{j=m}^kS_j\prod_{j=k+1}^{e - 1}S_j\cdot S_e\\
+        \prod_{j=m}^{e-1}S_j &\neq \prod_{j=m}^kS_j\prod_{j=k+1}^{e - 1}\\
+      \end{align*}
+      Then, because $k < e - 1$, we know that $e - 1 \in C$, but $e - 1 < e$, so $e$ is not the minimal element, contradiction. Thus our assumption that $C$ is nonempty was false. Then for all nonnegative integers $n$, any indexed product with an upper bound of $n$ can be associated. 
+    \end{proof}
+  \end{thm}
+  \begin{thm} [Index Shuffling] Given an indexed product $\prod_{j=0}^nS_j$, $\forall k \in \ZZ^0$, we have:
+    \begin{align*}
+      \prod_{j=0}^nS_j = \prod_{j=k}^{n+k}S_{j-k} 
+    \end{align*}
+    \begin{proof}
+      Fix $S$, $m$, and $k$. Then construct the set of counterexamples $C$:
+      \begin{equation*}
+        C = \{n \mid n \in \ZZ^0,\prod_{j=0}^nS_j = \prod_{j=k}^{n+k}S_{j-k} \}
+      \end{equation*}
+      This set is constucted from the $\ZZ^0$, so it is a subset of $\ZZ^0$. Assume for the sake of contradiction that this set is nonempty. Then there exists a minimal element $e \in C$. We know that $0 \le e$. Do a case split:
+      \proofcase Suppose that $e = 0$. Then we have $k \le 0$, but $0 \le k$, because $k$ is nonnegative. Thee $0 = k$ as well:
+      \begin{align*}
+        \prod_{j=k}^{e+k}S_{j-k} = \prod_{j=0}^{0+0}S_{j-0} = \prod_{j=0}^0S_j  = \prod_{j=0}^eS_j\\
+      \end{align*}
+      Then $e \notin C$, Contradiction.
+      \proofcase Suppose that $0 < e$. Then we have:
+      \begin{align*}
+        \prod_{j=k}^{e+k}S_{j-k} &= \prod_{j=k}^{e+k-1}S_{j-k} \cdot S_{(e+k)-k}\\
+                                 &= \prod_{j=k}^{(e-1)+k}S_{j-k} \cdot S_e\\
+      \end{align*}
+      But we also know that:
+      \begin{equation*}
+        \prod_{j=0}^eS_j = \prod_{j=0}^{e-1}S_j \cdot S_e 
+      \end{equation*}
+      Then we have:
+      \begin{align*}
+        \prod_{j=0}^eS_j &\neq  \prod_{j=k}^{e+k}S_{j-k} \\
+        \prod_{j=0}^{e-1}S_j \cdot S_e  &\neq \prod_{j=k}^{(e-1)+k}S_{j-k} \cdot S_e\\
+        \prod_{j=0}^{e-1}S_j &\neq \prod_{j=k}^{(e-1)+k}S_{j-k}\\
+      \end{align*}
+      Then $e - 1 \in C$, but $e - 1 < e$, so $e$ is not the minimal element. Contradiction. Then our assumption that $C$ is nonempty was false. Thus for all nonnegative integers $n$, if $n$ is the upper bound of an indexed product, then we can do index shifting on that product.
+    \end{proof}
+  \end{thm}
+  \begin{defun} [Intervals] For all nonegative integers $m, n$, define the set $[m, n] = \{k \mid k \in \ZZ^0, m \le k \le n\}$
+  \end{defun}
+  \begin{defun} [Permutation] A permutation is a bijection $f : [m, n] \to [m, n]$
+  \end{defun}
+  \begin{thm} [General Commutativity] Given an indexed product $\prod_{j=m}^nS_j$, for all permutations $f : [m, n] \to [m, n]$. $\prod_{j=m}^nS_j = \prod_{j=m}^nS_{f(j)}$
+    \begin{proof}
+      Fix $S$ and $m$. Now construct the set of counterexamples $C$:
+      \begin{equation*}
+        C = \{n \mid n \in \ZZ^0, m \le n, \exists \text{permutation } f : [m, n] \to [m, n], \prod_{j=m}^nS_j \neq \prod_{j=m}^nS_{f(j)}\}
+      \end{equation*}
+      $C$ is constructed from $\ZZ^0$, therefore it is a subset of $\ZZ^0$. Assume for the sake of contradiction that $C$ is nonempty. Then by WOP there exists a minimal element $e \in C$.\\
+      \proofcase Suppose $e = m$, but then $[m, e] = [m, m]$, and the only permutation from $[m, m] \to [m, m]$ is the identity function, as $[m, m]$ only has a single element. Then we know:
+      \begin{align*}
+        \prod_{j=m}^eS_{f(j)} = \prod_{j=m}^eS_j
+      \end{align*}
+      So $e \notin C$. Contradiction.\\
+      \proofcase Thus $m < e$, so $m \le e - 1$. We know that:
+      \begin{align*}
+        \prod_{j=m}^eS_{f(j)} = \prod_{j=m}^{e-1}S_{f(j)}S_{f(e)} 
+      \end{align*}
+      Because $f$ maps $[m, e] \to [m, e]$,  we know that $m \le f(e) \le e$. This proof is unfinished, and left as an exercise to someone less sleepy.
+    \end{proof}
+  \end{thm}
+  \newpage
+  \section{More Divisibility}
+  \epigraph{Truth is truth! It is not divisible, and any part of it cannot be set aside.}{\textit{Russel M. Nelson}}
+  Number Theory is the study of the integers, but it also the study of divisibility. Now, we will prove more stuff about divisibility in the integers.
+  \subsection{Divisibility in the Integers}
+  \begin{thm} [Integer Divisors Smaller]\label{divle} $\forall a, b \in \ZZ^+$, if $a \mid b$, then $a \le b$.
+    \begin{proof}
+      By definition $b = ak$, for some integer $k$. By \eqref{posdivclose}, $k \in \ZZ^+$, so $0 < k$, so $1 \le k$.
+      Now case split $1 \le k$
+      \setcounter{proofcase}{0}
+      \proofcase Suppose that $1 = k$, then $b = ak = a(1) = a$, so $a \le b$, by defintion.
+      \proofcase Now suppose $1 < k$, then $a(1) < ak$, then $a < ak = b$, so $a \le b$, by definition.
+    \end{proof}
+  \end{thm}
+  \begin{defun} [Greatest Common Divisor] For all nonnegative integers $a, b$, if for some integer $d$, $d \mid a$, $d \mid b$, and $\forall e \in \ZZ$ such that $e \mid a$, and $e \mid b$, $e \le d$, we say that $d = \gcd(a, b)$.
+  \end{defun}
+  \begin{thm} [Existence of GCD] $\forall a, b \in \ZZ$, $\gcd(a, b)$ exists and is positive.
+    \begin{proof}
+      Fix $a$, and $b$, WOLOG\eqref{wolog} $a < b$. Now construct the set of nonnegative common divisors of $a$ and $b$. 
+      \begin{equation*}
+        S = \{b - x \mid x \in \ZZ^0, x \mid a, x \mid b \}
+      \end{equation*}
+      This definition tells us that $x \mid a$, so $x \le a$, and $a < b$. Thus $S$ is a subset of the nonnegative integers. We know that $1 \mid a$, and $1 \mid b$, because $1$ is a unit, and units divide everything \eqref{uda}. Thus $b - 1 \in S$. Then $S$ is nonempty. So by WOP there exists a minimal element $e \in S$. This minimal element is equal to: This proof is unfinished, and left as an exercise to someone less sleepy.
+    \end{proof}\\\\
+    \end{proof}
+  \end{thm}
+  \begin{lem} [Division Algorithm] For all $a, b \in \ZZ^+$, there exists $q, r \in \ZZ$, where $0 \le r < b$, such that $a = bq + r$. 
+    \begin{proof}
+      Fix $a$ and $b$. Now construct the set $S$ of all possible values of $r$:
+      \begin{equation*}
+        S = \{a - bq \mid q \in \ZZ, 0 \le a - bq\} 
+      \end{equation*}
+      We know $a - bq \in \ZZ^0$, because it is greater than or equal to zero \eqref{0lenneg}. Thus $S$ is a subset of the nonnegative integers. If we choose $q = 0$, we have $a - bq = a - b\cdot0 = a - 0 = a + (-0) = a + 0 = a$. But $a \in \ZZ^+$, so $a$ is nonnegative. So $a \in S$, so $S$ is nonempty.\\\\
+      Then by WOP there exists a minimal $r \in S$, such that $0 \le r$, and $r = a - bq$ for some integer $q$. Now consider what happens when we remove $b$ from $r$:
+      \begin{align*}
+        r - b &= (a - bq) - b \\
+              &= a + (-bq) + (-b) \\
+              &= a + (-b)q + (-b)1 \\
+              &= a + (-b)(q + 1) \\
+              &= a - b(q+1) \\
+      \end{align*}
+      We can see that $r = (r - b) + b$, and $b$ is positive, so by definition $a - b(q+1) = r - b < r$. Now we compare $a - b(q+1)$ and $0$ \eqref{too}:
+      \proofcase Suppose $0 < a - b(q+1)$. Then $0 \le a - b(q+1)$, so $a - b(q +1) \in S$, but $a - b(q + 1) < r$, so $r$ is not the minimal element. Contradiction.  
+      \proofcase Suppose $0 = a - b(q+1)$. Then $0 \le a - b(q+1)$, Contradiction.
+      \proofcase Then we must conclude that  $a - b(q+1) < 0$, so $r - b < 0$, so $r < b$. So $0 \le r < b$.
+    \end{proof}
+  \end{lem}
+  \begin{lem} [Bezout's Lemma] For all positive integers $a, b$, there exist integers $x, y$ such that $ax + by = \gcd(a, b)$
+    \begin{proof}
+      Fix $a$ and $b$. Then consider the set of all positive integer outputs of $ax + by$:
+      \begin{align*}
+        S = \{ax + by \mid x, y \in \ZZ, 0 < ax + by\} 
+      \end{align*}
+      $0 < ax + by$, so $ax + by$ is positive. Therefore, $S$ is a subset of the nonnegative integers.  Consider $x = 1$ and $y = 0$, then $ax + by = a\cdot1 + b\cdot0 = a + 0 = a$, so $a \in S$. Thus $S$ is nonempty. Then by WOP it has a minimal element $e$.\\\\
+      $e = ax + by$ for some integers $x$ and $y$. Now we do the division algorithm on $e$ and $a$. In this way, we conclude $e = aq + r$ for some integers $q$ and $r$, where $0 \le r < a$. Then substituting, we get:
+      \begin{align*}
+        aq + r &= ax + by \\
+        (-(aq)) + (aq + r) &= (-(aq)) + (ax + by) \\
+        ((-(aq)) + aq) + r &= ((-(aq)) + ax) + by \\
+        (aq + (-(aq))) + r &= (a(-q) + ax) + by\\
+        0 + r &= a((-q) +x) + by\\
+        r + 0 &= a(x + (-q) + by\\
+        r &= a(x - q) + by
+      \end{align*}
+      Now do a case split on $0 \le r$
+      \proofcase Suppose $0 < r$, then $r \in S$, but $r < e$, so $e$ is not the minimal element. Contradiction.
+      \proofcase Suppose $0 = r$, then $e = aq$, so $a \mid e$.\\\\
+      If we repeat this logic, beginning by doing the euclidean algorithm on $e$ and $b$, we can also conclude $b \mid e$. By the definition of $\gcd$, we can then conclude that $e \le \gcd(a, b)$.\\\\
+      We also know that $\gcd(a,b) \mid a$, and $\gcd(a,b) \mid b$, by definition. Then by \eqref{lindiv}, we also know $\gcd(a, b) \mid ax + by = e$. Then by \eqref{divle}, $\gcd(a, b) \le e$. But given that $e \le \gcd(a,b)$, we also know that  $\gcd(a,b) = e$ by \eqref{leantisymm}. Thus, $\gcd(a,b) = ax + by$ for some $x$ and $y$ in the integers. 
+    \end{proof}
+  \end{lem}
+  \begin{lem} [The Fundamental Lemma] $\forall a, b, c \in \ZZ^0$, if $a \mid bc$ and $\gcd(a, b) = 1$, then $a \mid c$.
+    \begin{proof}
+      By definition, $ka = bc$ for some integer $k$. By Bezout's Lemma, $ax + by = \gcd(a,b) = 1$, for some integers $x$ and $y$. Then we do the following manipulations:
+      \begin{align*}
+        c &= c(1)\\
+          &= (c)(ax + by) \\
+          &= c(ax) + c(by) \\
+          &= (ca)x + c(by) \\
+          &= (ac)x + (cb)y \\
+          &= a(cx) + (bc)y \\
+          &= a(cx) + (ka)y \\
+          &= a(cx) + (ak)y \\
+          &= a(cx) + a(ky) \\
+          &= a(cx + ky) \\
+      \end{align*}
+      So $a \mid c$ by definition.
+    \end{proof}
+  \end{lem}
+  \subsection{Primality in the Integers}
+  We will construct a simpler definition of primality for use in the integers.
+  \begin{thm} [Positive Integer Primes]\label{pip} For all $p \in \ZZ^+$, then $p$ is prime if and only if $p \neq 1$, and $\forall a \in \ZZ^+$, $a \mid p$ implies $a = 1$ or $a = p$    
+    \begin{proof}
+      We will first prove the forward direction. By defintion $p = ak$. Then $a$ is a unit or $k$ is a unit.
+      \proofcase Suppose that $a$ is the unit. Then $k$ is not a unit, so $p = ak$ cannot be 1, otherwise $a$ would be the inverse of $k$. Additionally, $a = 1$ or $a = -1$, but $a$ is positive, so $a = 1$.
+      \proofcase Suppose that $k$ is the unit. Then $a$ is not a unit, so $p = ak$, cannot be 1, otherwise $k$ would be the inverse of $a$. Then $k = 1$ or $k = -1$, but $k$ is positve by \eqref{posdivclose}, so $k = 1$. Then $p = ak = a(1) = a$.
+    \end{proof}
+    \begin{proof}
+      We will now prove the reverse direction. Consider an arbitrary $b, c$ such that $bc = p$. Then $b \mid p$. Now do trichotomy on $b$:
+      \proofcase Suppose $b = 0$, then $p = bc = 0(c) = c(0) = 0 \in \ZZ^+$, contradiction.
+      \proofcase Suppose $-b \in \ZZ^+$. We know $p = bc = -(-(bc)) = -((-b)c) = (-b)(-c)$, so $-b \mid p$. Then by assumption, $-b = 1$ or $-b = p$.
+      \begin{itemize}
+      \item If $-b = 1$, then $b = -1$, so $b$ is a unit.
+      \item If $-b = p$, then $p = (-b)(-c) = p(-c)$, so $1 = -c$, so $c = -1$, so $c$ is a unit.
+      \end{itemize}
+      Then by definition, $p$ is prime.
+      \proofcase Suppose $b \in \ZZ^+$, but $b \mid p$, so by assumption $b = 1$ or $b = p$
+      \begin{itemize}
+      \item If $b = 1$, then $b$ is a unit.
+      \item If $b = p$, then $p = bc = pc$, so $1 = c$, then $c$ is a unit.
+      \end{itemize}
+      Then by definition $p$ is prime.
+    \end{proof}
+  \end{thm}
+  \begin{defun} [Set of Positive Primes] Let $\PP$ be the set of positive integers that are prime
+    \begin{equation*} \PP = \{x \mid x \in \ZZ^+, \text{prime } p\}\end{equation*}
+  \end{defun}
+  \begin{thm} [GCD with Primes] $\forall a, p \in \ZZ^+$ where $p$ is prime, if $p \nmid a$, $\gcd(a, p) = 1$ 
+    \begin{proof} Being a unit\eqref{uda}, we know that $1 \mid a$ and $1 \mid p$. Now assume for the sake of contradiction that there exists an integer $k$, where $k \not\le 1$, that divides both $a$ and $p$. By \eqref{pip}, $k = 1$ or $k = p$.
+      \proofcase Suppose that $k = 1$, but $k \not\le 1$, so $k \neq 1$, contradiction.
+      \proofcase Suppose that $k = p$, then $k = p \nmid a$, contradiction.\\\\
+      Then no such $k$ can exist.
+    \end{proof}
+  \end{thm}
+  \begin{lem} [Euclid's Lemma] $\forall a, b, p \in \ZZ^+$, where $p$ is prime, then if $p \mid ab$, then $p \mid a$ or $p \mid b$.
+    \begin{proof} 
+      \proofcase Suppose that $p \mid a$, then we are done.
+      \proofcase Suppose that $p \nmid a$, then $\gcd(a, p) = 1$, so by the Fundamental Lemma, $p \mid b$.
+    \end{proof}
+  \end{lem}
+  \begin{lem} [Generalized Euclid] Let $S : \ZZ^0 \to \ZZ^+$ be an sequence. Then for all $m, n \in \ZZ^0$, where $m \le n$, and some prime $p$ divides $\prod_{j=m}^nS_j$, there exists $i \in \ZZ^0$, such that $m \le i \le n$ and $p \mid S_i$.
+    \begin{proof}
+      Fix $S$, $m$, and $p$. Then construct the set of counterexamples, $C$:
+      \begin{align*}
+        C = \{n \mid n \in \ZZ^0, m \le n, p \mid \prod_{j=m}^nS_j, \nexists i \in \ZZ^0, m \le i \le n, p \mid S_i\}
+      \end{align*}
+      $C$ is constructed from the nonnegative integers, so $C$ is a subset of $\ZZ^0$. Assume for the sake of contradiction that $C$ is nonempty, then there exists a minimal element $e \in C$. We know that $m \neq e$, because otherwise $p \mid \prod_{j=m}^eS_j = S_e$, and $m \le e \le e$, contradiction. Thus, $m < e$ and $m + 1 \le e$, and $m \le e - 1$. We also know that:
+      \begin{align*}
+        p \mid \prod_{j=m}^eS_j = \prod_{j=m}^{e-1}S_jS_e 
+      \end{align*}
+      By Euclid's Lemma, we know that $p \mid \prod_{j=m}^{e-1}S_j$ or $p \mid S_e$
+      \proofcase Suppose $p \mid S_e$, but $m \le e \le e$, contradiction.
+      \proofcase Suppose $p \mid \prod_{j=m}^{e-1}S_j$, but then $e - 1 \in C$, because any $i$ that satisfies $m \le i \le e-1$, will also satisfy $m \le i \le e$, by transitivity. But $e - 1 < e$, so $e$ is not the minimal element, contradiction.\\\\
+      Thus, our assumption that $C$ is nonempty was false. Therefore for all integers $n$, if $n$ is the upper bound of an indexed product divisible by $p$, at least one term in the product will be divisible by $p$.
+    \end{proof}
+  \end{lem}
+  \begin{lem}\label{leastone} All positive integers greater than 1 have at least one prime divisor.
+    \begin{proof}
+      Construct the set of counterexamples $S$:
+      \begin{equation*}
+        S = \{x \mid x \in \ZZ^+, x > 1, \nexists p \in \ZZ^+, p \text{ prime}, p \mid x\}
+      \end{equation*}
+      $S$ is a subset of $\ZZ^+$, because it is constructed from them, so it is also a subset of $\ZZ^0$. Assume for the sake of contradiction that $S$ is nonempty. Then there exists a minimal $e \in S$.\\
+      \proofcase Suppose that $\nexists e' \in \ZZ^+$ where $e' \neq 1$ and $e' \neq e$, such that $e' \mid e$. Then $e$ is prime, and $e \mid e$, so $e \notin S$, contradiction.\\
+      \proofcase Suppose that $\exists e' \in \ZZ^+$ where $e' \neq 1$ and $e' \neq e$, such that $e' \mid e$. $e'$ doesn't have a prime divisor, otherwise by transitivity \eqref{divtrans} that prime divisor would divide $e$. Additionally $0 < e'$, so $1 \le e'$, but $1 \neq e'$, so $1 < e'$. Then $e' \in S$, but $e' \mid e$, so $e' \le e$, but $e' \neq e$, so $e' < e$, then $e$ is not the minimal element. Contradiction.\\\\
+      Then our assumption that $S$ was nonempty was false. Then every positive integer greater than 1 has some positive prime divisor.
+    \end{proof}
+  \end{lem}
+  \begin{defun} [Prime Factorizations of Positive Integers] An indexed product $\prod_{j=0}^nS_j$, where $S : \ZZ^0 \to \PP$, that is bounded above by some $n \in \ZZ^0$, and evaluates to $k \in \ZZ^+$, is said to be a Prime Factorization of $k$.
+  \end{defun}
+  \begin{thm} [Existence of Prime Factorizations of Positive Integers] $\forall k \in \ZZ^+$, where $k > 1$, there exists a Prime Factorization of $k$.
+    \begin{proof}
+      Construct the set of positive integers greater than 1 without Prime Factorizations, $C$:
+      \begin{equation*}
+        C = \{x \mid x \in \ZZ^+, x > 1, x \text{ has no Prime Factorization}\}
+      \end{equation*}
+      Being constructed from $\ZZ^+$, we know that $C$ is a subset of $\ZZ^+$ and $\ZZ^0$. Assume for the sake of contradiction that $C$ is nonempty. Then by WOP, there exists a minimal $e \in C$. But by \eqref{leastone} there exists some prime $p$ such that $p \mid e$. So by definition $e = pk$ for some integer $k$. By \eqref{posdivclose}, $k$ is also positive, so $1 \le k$.
+      \proofcase Suppose $1 = k$, then $e = pk = p(1) = p$, so $e$ is prime, but prime numbers trivially have a prime factorization. Contradiction. 
+      \proofcase Suppose $1 < k$.
+      \begin{itemize}
+      \item Suppose $k$ has a prime factorization, $\prod_{j=0}^nS_j$, then define a new sequence $S': \ZZ^0 \to \PP$, which is the same as $S$, except that $S'_{n+1} = p$, then:
+        \begin{align*}
+          e = kp = \prod_{j=0}^nS_jp = \prod_{j=0}^nS'_jS'_{n+1} = \prod_{j=0}^{n+1}S'_j
+        \end{align*}
+        meaning $e$ would have a prime factorization, contradiction.
+      \item Now suppose that $k$ doesn't have a prime factorization. Then $k \in S$, but we also know that $1 \neq p$, so $1 < p$, then $k(1) < k(p)$, so $k < e$. Then $e$ is not the minimal element. Contradiction.
+      \end{itemize}
+      Then our assumption that $C$ is nonempty was false.
+    \end{proof}
+  \end{thm}
+  \newpage
+  \section{An Ending}
+  \epigraph{“How did you go bankrupt?"
+   "Two ways. Gradually, then suddenly."}{\textit{Ernest Hemingway}}
+
+ \begin{defun} [Sorted Prime Factorization] All prime factorizations can be put into a sorted form, because of the well ordering of the positive integers. A sort is a permutation, so it doesn't change what the integer that the prime factorization multiplies out to. Two prime factorizations of a positive integer are equal iff every term of their sorted forms are equivalent.  
+ \end{defun}
+ \begin{thm} [Fundamental Theorem of Arithmetic] If an integer $k > 1$ has two prime factorizations in sorted form, $\prod_{j=0}^nS_j$ and $\prod_{j=0}^mT_j$. Then $m = n$, and $\forall i \in [0, m]$, $S_j = T_i$. In other words, every positive integer except 1 has a unique prime factorization (in sorted form).
+    \begin{proof}
+      Construct the set of counterexamples, $C$:
+      \begin{align*}
+        C = \{k \mid k \in \ZZ^+, 1 < k,  \prod_{j=0}^nS_j = \prod_{j=0}^mT_j = k, \text{S and T sorted and inequivalent} \}
+      \end{align*}
+      $C$ is constructed from $\ZZ^+$, thus it is a subset of the nonegatives. Assume for the sake of contradiction that $C$ is nonempty. Then by WOP there exists a minimal $e \in C$. $e$ then has two sorted, equal, and inequivalent prime factorizations, $\prod_{j=0}^nS_j$ and $\prod_{j=0}^mT_j$\\\\
+      We know that $n \neq 0$, because if not then $S_0 = \prod_{j=0}^mT_j$, so $S_0 \mid \prod_{j=0}^mT_j$ but $S_0$, is prime, so then $S_0 \mid T_i$ for some $0 \le i \le m$ by Euclid, but $T_i$ is prime, so $S_0 = T_i$. Then $T_i =  \prod_{j=0}^mT_j$, so $m = 0$, then $S_0 = T_0$ contradiction.\\\\ 
+      Then $0 < n$. Then $0 \le n-1$, so:
+      \begin{align*}
+        \prod_{j=0}^nS_j = \prod_{j=0}^{n-1}S_j \cdot S_n
+      \end{align*}
+      By definition, $S_n \mid \prod_{j=0}^nS_j$, and thus $S_n \mid \prod_{j=0}^mT_j$. Then $S_n \mid T_i$ for some $0 \le i \le m$. Then $S_n = T_i$. Then cancel out the $T_i$ or something lol. Then $\frac{k}{T_i}$ is smaller than $k$ and stuff. contradiction. making this rigorous is left as an exercise for someone not as sleepy as me.
+    \end{proof}
+  \end{thm}
+\end{document}
